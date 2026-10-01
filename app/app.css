@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-badge-green: #d1fae5;
+  --color-badge-green-text: #065f46;
+  --color-badge-yellow: #fef9c3;
+  --color-badge-yellow-text: #78350f;
+  --color-badge-red: #fee2e2;
+  --color-badge-red-text: #991b1b;
+}
+
+/* Gradient text utility */
+.text-gradient {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Navbar */
+.navbar {
+  @apply flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm;
+}
+
+/* Resume summary layout */
+.resume-summary {
+  @apply flex flex-col gap-4 py-4;
+}
+
+.category {
+  @apply flex flex-row items-center justify-between;
+}
+
+/* Score colors */
+.score-good {
+  @apply text-green-600;
+}
+.score-medium {
+  @apply text-yellow-600;
+}
+.score-bad {
+  @apply text-red-600;
+}
