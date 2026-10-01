@@ -6,28 +6,31 @@ const Navbar = () => {
 
   return (
     <nav className="navbar">
-      <Link to="/">
-        <p className="text-2xl font-bold text-gradient">RESUMIND</p>
+      <Link to="/" className="brand">
+        resumind<span>.</span>
       </Link>
-      <div className="flex items-center gap-4">
+
+      <div className="flex items-center gap-3">
         {auth.isAuthenticated ? (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">
-              {auth.user?.username}
-            </span>
-            <button
-              onClick={auth.signOut}
-              className="text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
+          <>
+            <Link to="/upload" className="btn-primary text-xs px-4 py-2">
+              + new analysis
+            </Link>
+            <div className="flex items-center gap-2 pl-3 border-l border-stone-200">
+              <div className="w-7 h-7 rounded-full bg-stone-100 flex items-center justify-center text-xs font-semibold text-stone-600 uppercase">
+                {auth.user?.username?.[0] ?? "U"}
+              </div>
+              <button
+                onClick={auth.signOut}
+                className="text-xs text-stone-400 hover:text-stone-700 transition-colors"
+              >
+                sign out
+              </button>
+            </div>
+          </>
         ) : (
-          <Link
-            to="/auth"
-            className="text-sm px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-          >
-            Sign In
+          <Link to="/auth" className="btn-primary text-xs">
+            sign in
           </Link>
         )}
       </div>

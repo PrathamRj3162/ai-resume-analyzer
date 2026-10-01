@@ -7,8 +7,8 @@ import { Link, useNavigate } from "react-router";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Resumind" },
-    { name: "description", content: "Smart feedback for your dream job!" },
+    { title: "resumind — AI resume feedback" },
+    { name: "description", content: "Honest feedback for your next application." },
   ];
 }
 
@@ -26,102 +26,107 @@ export default function Home() {
     const loadResumes = async () => {
       if (!auth.isAuthenticated) return;
       setLoadingResumes(true);
-
       try {
         const items = (await kv.list("resume:*", true)) as KVItem[];
         const parsed: Resume[] = items
           .filter((item) => item.value)
           .map((item) => JSON.parse(item.value));
-        setResumes(parsed);
+        setResumes(parsed.reverse());
       } catch (e) {
         console.error("Failed to load resumes:", e);
       } finally {
         setLoadingResumes(false);
       }
     };
-
     loadResumes();
   }, [auth.isAuthenticated]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: "var(--color-cream)" }}>
       <Navbar />
-      <main className="max-w-6xl mx-auto px-4 py-10">
-        {/* Hero section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
-            Your AI Resume{" "}
-            <span className="text-gradient">Analyzer</span>
-          </h1>
-          <p className="mt-4 text-lg text-gray-500 max-w-xl mx-auto">
-            Upload your resume, get instant AI-powered feedback tailored to the
-            job you're applying for.
-          </p>
-          <Link
-            to="/upload"
-            className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
+
+      <main className="max-w-5xl mx-auto px-5 py-12">
+
+        {/* Header row */}
+        <div className="flex items-end justify-between mb-10">
+          <div>
+            <p className="text-xs text-stone-400 uppercase tracking-widest mb-2 font-medium">
+              Dashboard
+            </p>
+            <h1 className="text-3xl font-bold text-stone-900 leading-tight">
+              Your resumes
+            </h1>
+            <p className="text-stone-500 mt-1 text-sm">
+              {resumes.length > 0
+                ? `${resumes.length} ${resumes.length === 1 ? "resume" : "resumes"} analyzed so far`
+                : "Nothing here yet — upload your first resume below"}
+            </p>
+          </div>
+          <Link to="/upload" className="btn-primary shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Analyze New Resume
+            Analyze resume
           </Link>
         </div>
 
-        {/* Resumes grid */}
+        {/* Resume grid */}
         {loadingResumes ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="bg-white rounded-2xl h-64 animate-pulse border border-gray-100"
+                className="bg-white border border-stone-200 rounded-2xl h-72 animate-pulse"
+                style={{ animationDelay: `${i * 80}ms` }}
               />
             ))}
           </div>
         ) : resumes.length > 0 ? (
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Your Analyzed Resumes ({resumes.length})
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {resumes.map((resume) => (
-                <ResumeCard key={resume.id} resume={resume} />
-              ))}
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {resumes.map((resume, i) => (
+              <div
+                key={resume.id}
+                className="fade-up"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <ResumeCard resume={resume} />
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="text-center py-20">
-            <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg
-                className="w-10 h-10 text-indigo-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
+          /* Empty state — feels more personal */
+          <div className="fade-up">
+            <div className="border-2 border-dashed border-stone-200 rounded-3xl p-16 text-center">
+              <p className="text-4xl mb-4">📄</p>
+              <h3 className="text-lg font-semibold text-stone-700 mb-1">
+                No resumes yet
+              </h3>
+              <p className="text-stone-400 text-sm mb-6 max-w-xs mx-auto">
+                Upload a resume and paste a job description to get honest, specific feedback in seconds.
+              </p>
+              <Link to="/upload" className="btn-primary">
+                Upload your first resume
+              </Link>
             </div>
-            <h3 className="text-xl font-semibold text-gray-700">
-              No resumes yet
-            </h3>
-            <p className="text-gray-400 mt-2">
-              Upload your first resume to get AI-powered feedback.
-            </p>
+
+            {/* How it works — subtle, not marketing-y */}
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {[
+                { n: "1", title: "Upload your PDF", body: "Drop in your resume — it stays private in your Puter account." },
+                { n: "2", title: "Paste the job description", body: "The AI tailors its feedback to the exact role you're applying to." },
+                { n: "3", title: "Read the feedback", body: "You'll get scores and specific tips across 5 key areas." },
+              ].map((step) => (
+                <div key={step.n} className="flex gap-4">
+                  <span className="text-xl font-bold text-stone-200 shrink-0 mt-0.5">
+                    {step.n}
+                  </span>
+                  <div>
+                    <p className="font-medium text-stone-700 text-sm">{step.title}</p>
+                    <p className="text-stone-400 text-xs mt-1 leading-relaxed">{step.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </main>

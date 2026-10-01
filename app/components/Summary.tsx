@@ -1,78 +1,61 @@
-import React from "react";
 import ScoreGauge from "./ScoreGauge";
-import ScoreBadge from "./ScoreBadge";
-
-interface CategoryProps {
-  title: string;
-  score: number;
-}
-
-const Category = ({ title, score }: CategoryProps) => {
-  const textColor =
-    score >= 70
-      ? "text-green-600"
-      : score >= 49
-      ? "text-yellow-600"
-      : "text-red-600";
-
-  return (
-    <div className="resume-summary">
-      <div className="category">
-        <div className="flex flex-row gap-2 items-center justify-center">
-          <p className="text-base font-medium text-gray-700">{title}</p>
-          <ScoreBadge score={score} />
-        </div>
-        <p className={`text-base font-bold ${textColor}`}>{score}/100</p>
-      </div>
-      {/* Progress bar */}
-      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-700 ${
-            score >= 70
-              ? "bg-green-500"
-              : score >= 49
-              ? "bg-yellow-500"
-              : "bg-red-500"
-          }`}
-          style={{ width: `${score}%` }}
-        />
-      </div>
-    </div>
-  );
-};
 
 interface SummaryProps {
   feedback: Feedback;
 }
 
-const Summary: React.FC<SummaryProps> = ({ feedback }) => {
-  const { overallScore, ATS, toneAndStyle, content, structure, skills } =
-    feedback;
+const categories = [
+  { key: "ATS", label: "ATS compatibility" },
+  { key: "toneAndStyle", label: "Tone & style" },
+  { key: "content", label: "Content quality" },
+  { key: "structure", label: "Structure" },
+  { key: "skills", label: "Skills match" },
+] as const;
 
+const Summary = ({ feedback }: SummaryProps) => {
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6 w-full">
-      {/* Header */}
-      <div className="flex flex-col items-center mb-8">
-        <ScoreGauge score={overallScore} />
-        <h2 className="text-xl font-bold mt-3 text-gray-800">
-          Overall Resume Score
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          {overallScore >= 70
-            ? "Great work! Your resume is well-optimized."
-            : overallScore >= 49
-            ? "Good start! Some improvements can boost your score."
-            : "Needs work. Follow the tips below to improve."}
-        </p>
+    <div className="section-card">
+      <div className="flex items-center gap-5 mb-6">
+        <ScoreGauge score={feedback.overallScore} />
+        <div>
+          <p className="text-xs text-stone-400 uppercase tracking-widest font-medium mb-1">
+            Overall score
+          </p>
+          <p className="text-stone-600 text-sm leading-relaxed max-w-xs">
+            {feedback.overallScore >= 70
+              ? "This resume is in good shape. A few tweaks and it's ready to send."
+              : feedback.overallScore >= 50
+              ? "Decent foundation. The details below will help you sharpen it."
+              : "There's meaningful room for improvement — read the tips below."}
+          </p>
+        </div>
       </div>
 
-      {/* Category breakdown */}
-      <div className="space-y-3">
-        <Category title="ATS Compatibility" score={ATS.score} />
-        <Category title="Tone & Style" score={toneAndStyle.score} />
-        <Category title="Content Quality" score={content.score} />
-        <Category title="Structure & Layout" score={structure.score} />
-        <Category title="Skills Alignment" score={skills.score} />
+      {/* Category scores */}
+      <div className="space-y-3 pt-4 border-t border-stone-100">
+        {categories.map(({ key, label }) => {
+          const cat = feedback[key as keyof Feedback] as { score: number };
+          const s = cat.score;
+          const color =
+            s >= 70 ? "bg-emerald-400" : s >= 50 ? "bg-amber-400" : "bg-red-400";
+          const textColor =
+            s >= 70 ? "text-emerald-600" : s >= 50 ? "text-amber-600" : "text-red-500";
+
+          return (
+            <div key={key} className="flex items-center gap-3">
+              <span className="text-sm text-stone-500 w-36 shrink-0">{label}</span>
+              <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${color} transition-all duration-700`}
+                  style={{ width: `${s}%` }}
+                />
+              </div>
+              <span className={`text-sm font-semibold ${textColor} w-8 text-right tabular-nums`}>
+                {s}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

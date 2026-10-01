@@ -6,7 +6,7 @@ import Summary from "~/components/Summary";
 import { usePuterStore } from "~/lib/puter";
 
 export const meta = () => [
-  { title: "Resumind | Review" },
+  { title: "Review — resumind" },
   { name: "description", content: "Detailed review of your resume" },
 ];
 
@@ -29,23 +29,17 @@ const ResumePage = () => {
     const loadResume = async () => {
       if (!auth.isAuthenticated || !id) return;
       setLoadingData(true);
-
       try {
         const stored = await kv.get(`resume:${id}`);
         if (!stored) return;
-
         const data: Resume = JSON.parse(stored);
         setResumeData(data);
         setFeedback(data.feedback);
 
-        // Load PDF blob
         const resumeBlob = await fs.read(data.resumePath);
         if (resumeBlob) {
-          const pdfBlob = new Blob([resumeBlob], { type: "application/pdf" });
-          setResumeUrl(URL.createObjectURL(pdfBlob));
+          setResumeUrl(URL.createObjectURL(new Blob([resumeBlob], { type: "application/pdf" })));
         }
-
-        // Load image blob
         const imageBlob = await fs.read(data.imagePath);
         if (imageBlob) {
           setImageUrl(URL.createObjectURL(imageBlob));
@@ -56,16 +50,15 @@ const ResumePage = () => {
         setLoadingData(false);
       }
     };
-
     loadResume();
   }, [auth.isAuthenticated, id]);
 
   if (loadingData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-500">Loading resume analysis...</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--color-cream)" }}>
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-stone-300 border-t-stone-700 rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-stone-400 text-sm">Loading your analysis...</p>
         </div>
       </div>
     );
@@ -73,92 +66,94 @@ const ResumePage = () => {
 
   if (!feedback || !resumeData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--color-cream)" }}>
         <div className="text-center">
-          <p className="text-xl font-semibold text-gray-700">Resume not found</p>
-          <Link
-            to="/"
-            className="mt-4 inline-block text-indigo-600 hover:underline"
-          >
-            ← Back to Home
+          <p className="text-stone-500 mb-3">Couldn't find that resume.</p>
+          <Link to="/" className="text-sm text-stone-400 hover:text-stone-700 underline underline-offset-2">
+            ← Go home
           </Link>
         </div>
       </div>
     );
   }
 
+  const score = feedback.overallScore;
+  const scoreLabel = score >= 70 ? "Strong resume" : score >= 50 ? "Good start" : "Needs work";
+  const scoreColor = score >= 70 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-red-500";
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <Link
-              to="/"
-              className="text-2xl font-bold text-gradient"
-            >
-              RESUMIND
-            </Link>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {resumeData.jobTitle} @ {resumeData.companyName}
+    <div className="min-h-screen" style={{ backgroundColor: "var(--color-cream)" }}>
+      {/* Slim topbar */}
+      <header className="bg-white border-b border-stone-200 px-5 py-3.5 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link to="/" className="brand text-base">
+            resumind<span style={{ color: "var(--color-accent)" }}>.</span>
+          </Link>
+          <span className="text-stone-300 text-sm">|</span>
+          <div className="hidden sm:block">
+            <p className="text-sm font-medium text-stone-700 leading-tight">
+              {resumeData.jobTitle}
             </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {resumeUrl && (
-              <a
-                href={resumeUrl}
-                download={`resume-${id}.pdf`}
-                className="text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                Download PDF
-              </a>
-            )}
-            <Link
-              to="/"
-              className="text-sm px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-            >
-              ← Back
-            </Link>
+            <p className="text-xs text-stone-400">{resumeData.companyName}</p>
           </div>
         </div>
-      </div>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* AI Summary banner */}
-        {feedback.summary && (
-          <div className="mb-6 bg-indigo-50 border border-indigo-100 rounded-2xl p-5">
-            <p className="text-sm font-semibold text-indigo-700 mb-1">
-              AI Summary
-            </p>
-            <p className="text-gray-700 text-sm leading-relaxed">
+        <div className="flex items-center gap-2">
+          {resumeUrl && (
+            <a href={resumeUrl} download={`resume.pdf`} className="btn-ghost text-xs">
+              Download PDF
+            </a>
+          )}
+          <Link to="/" className="btn-ghost text-xs">
+            ← All resumes
+          </Link>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-5 py-8">
+        {/* Score headline — quick read at a glance */}
+        <div className="mb-8 fade-up">
+          <div className="flex items-baseline gap-3">
+            <span className={`text-5xl font-bold ${scoreColor}`}>{score}</span>
+            <span className="text-stone-300 text-2xl font-light">/100</span>
+            <span className={`text-sm font-medium ${scoreColor} ml-1`}>— {scoreLabel}</span>
+          </div>
+          {feedback.summary && (
+            <p className="text-stone-500 text-sm mt-2 max-w-2xl leading-relaxed">
               {feedback.summary}
             </p>
-          </div>
-        )}
+          )}
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Resume preview */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-md overflow-hidden sticky top-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Left: resume thumbnail */}
+          <div className="lg:col-span-2">
+            <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden sticky top-6 fade-up">
               {imageUrl ? (
                 <img
                   src={imageUrl}
                   alt="Resume preview"
-                  className="w-full object-top"
+                  className="w-full object-top object-cover"
                 />
               ) : (
-                <div className="h-96 bg-gray-100 flex items-center justify-center">
-                  <p className="text-gray-400 text-sm">No preview available</p>
+                <div className="h-96 flex items-center justify-center bg-stone-50">
+                  <p className="text-stone-300 text-sm">No preview</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Right: Feedback panels */}
-          <div className="lg:col-span-2 space-y-6">
-            <Summary feedback={feedback} />
-            <ATS score={feedback.ATS.score} suggestions={feedback.ATS.tips} />
-            <Details feedback={feedback} />
+          {/* Right: feedback */}
+          <div className="lg:col-span-3 space-y-5">
+            <div className="fade-up" style={{ animationDelay: "60ms" }}>
+              <Summary feedback={feedback} />
+            </div>
+            <div className="fade-up" style={{ animationDelay: "120ms" }}>
+              <ATS score={feedback.ATS.score} suggestions={feedback.ATS.tips} />
+            </div>
+            <div className="fade-up" style={{ animationDelay: "180ms" }}>
+              <Details feedback={feedback} />
+            </div>
           </div>
         </div>
       </main>

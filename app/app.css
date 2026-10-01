@@ -1,43 +1,114 @@
 @import "tailwindcss";
 
 @theme {
-  --color-badge-green: #d1fae5;
-  --color-badge-green-text: #065f46;
-  --color-badge-yellow: #fef9c3;
+  /* Warm, human color palette */
+  --color-cream: #faf9f6;
+  --color-ink: #1c1917;
+  --color-ink-light: #44403c;
+  --color-ink-muted: #78716c;
+  --color-border: #e7e5e4;
+  --color-surface: #ffffff;
+  --color-accent: #dc6b19;
+  --color-accent-light: #fff4ed;
+
+  /* Score colors — warmer tones */
+  --color-score-high: #15803d;
+  --color-score-high-bg: #f0fdf4;
+  --color-score-mid: #b45309;
+  --color-score-mid-bg: #fffbeb;
+  --color-score-low: #dc2626;
+  --color-score-low-bg: #fef2f2;
+
+  /* Badge colors */
+  --color-badge-green: #dcfce7;
+  --color-badge-green-text: #14532d;
+  --color-badge-yellow: #fef3c7;
   --color-badge-yellow-text: #78350f;
   --color-badge-red: #fee2e2;
-  --color-badge-red-text: #991b1b;
+  --color-badge-red-text: #7f1d1d;
 }
 
-/* Gradient text utility */
-.text-gradient {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* ---- Base ---- */
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
 }
 
-/* Navbar */
+/* ---- Brand wordmark ---- */
+.brand {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--color-ink);
+}
+
+.brand span {
+  color: var(--color-accent);
+}
+
+/* ---- Navbar ---- */
 .navbar {
-  @apply flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm;
+  @apply flex items-center justify-between px-6 py-3.5 bg-white border-b border-stone-200;
 }
 
-/* Resume summary layout */
+/* ---- Resume summary layout ---- */
 .resume-summary {
-  @apply flex flex-col gap-4 py-4;
+  @apply flex flex-col gap-2 py-3;
 }
 
 .category {
   @apply flex flex-row items-center justify-between;
 }
 
-/* Score colors */
-.score-good {
-  @apply text-green-600;
+/* ---- Tip pills ---- */
+.tip-good {
+  @apply flex gap-2 items-start text-sm text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5;
 }
-.score-medium {
-  @apply text-yellow-600;
+
+.tip-improve {
+  @apply flex gap-2 items-start text-sm text-amber-900 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5;
 }
-.score-bad {
-  @apply text-red-600;
+
+/* ---- Section card ---- */
+.section-card {
+  @apply bg-white border border-stone-200 rounded-2xl p-6 w-full;
+}
+
+/* ---- Input styles ---- */
+.field-input {
+  @apply w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm bg-white
+         placeholder-stone-400 text-stone-800
+         focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300
+         transition-all duration-150;
+}
+
+/* ---- Primary button ---- */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+         bg-stone-900 text-white text-sm font-medium
+         hover:bg-stone-700 active:scale-[0.98]
+         disabled:opacity-40 disabled:cursor-not-allowed
+         transition-all duration-150;
+}
+
+/* ---- Ghost button ---- */
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
+         border border-stone-200 text-stone-600 text-sm font-medium
+         hover:bg-stone-50 hover:text-stone-900
+         transition-all duration-150;
+}
+
+/* ---- Score ring color helpers ---- */
+.ring-high { stroke: #16a34a; }
+.ring-mid  { stroke: #d97706; }
+.ring-low  { stroke: #dc2626; }
+
+/* ---- Fade in animation ---- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up {
+  animation: fadeUp 0.35s ease both;
 }

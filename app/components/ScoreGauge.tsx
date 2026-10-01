@@ -1,64 +1,42 @@
-import { useEffect, useRef, useState } from "react";
-
 const ScoreGauge = ({ score = 75 }: { score: number }) => {
-  const [pathLength, setPathLength] = useState(0);
-  const pathRef = useRef<SVGPathElement>(null);
+  const pct = score / 100;
+  // Semi-circle arc: radius 40, center 50,50, from (-40,0) to (40,0) relative
+  const r = 38;
+  const arcLen = Math.PI * r; // half circumference
+  const offset = arcLen * (1 - pct);
 
-  const percentage = score / 100;
-
-  useEffect(() => {
-    if (pathRef.current) {
-      setPathLength(pathRef.current.getTotalLength());
-    }
-  }, []);
-
-  const scoreColor =
-    score > 69 ? "#16a34a" : score > 49 ? "#ca8a04" : "#dc2626";
+  const color =
+    score >= 70 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-40 h-20">
-        <svg viewBox="0 0 100 50" className="w-full h-full">
-          <defs>
-            <linearGradient
-              id="gaugeGradient"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="0%"
-            >
-              <stop offset="0%" stopColor="#dc2626" />
-              <stop offset="50%" stopColor="#ca8a04" />
-              <stop offset="100%" stopColor="#16a34a" />
-            </linearGradient>
-          </defs>
-          {/* Background arc */}
-          <path
-            d="M 10 50 A 40 40 0 0 1 90 50"
-            fill="none"
-            stroke="#e5e7eb"
-            strokeWidth="8"
-            strokeLinecap="round"
-          />
-          {/* Foreground arc */}
-          <path
-            ref={pathRef}
-            d="M 10 50 A 40 40 0 0 1 90 50"
-            fill="none"
-            stroke={scoreColor}
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray={pathLength}
-            strokeDashoffset={pathLength * (1 - percentage)}
-            style={{ transition: "stroke-dashoffset 0.8s ease" }}
-          />
-        </svg>
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-          <p className="text-2xl font-bold" style={{ color: scoreColor }}>
-            {score}
-          </p>
-          <p className="text-xs text-gray-500">/ 100</p>
-        </div>
+    <div className="relative w-20 h-10 shrink-0">
+      <svg viewBox="0 0 100 52" className="w-full h-full overflow-visible">
+        {/* Track */}
+        <path
+          d="M 12 50 A 38 38 0 0 1 88 50"
+          fill="none"
+          stroke="#f5f5f4"
+          strokeWidth="7"
+          strokeLinecap="round"
+        />
+        {/* Fill */}
+        <path
+          d="M 12 50 A 38 38 0 0 1 88 50"
+          fill="none"
+          stroke={color}
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeDasharray={arcLen}
+          strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 0.8s ease" }}
+        />
+      </svg>
+      {/* Score number below arc */}
+      <div
+        className="absolute inset-x-0 bottom-0 text-center text-base font-bold tabular-nums"
+        style={{ color }}
+      >
+        {score}
       </div>
     </div>
   );

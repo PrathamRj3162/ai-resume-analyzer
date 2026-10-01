@@ -25,6 +25,8 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+// Suppress hydration warning for theme attributes
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const { init } = usePuterStore();
 

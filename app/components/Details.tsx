@@ -5,98 +5,75 @@ import {
   AccordionHeader,
   AccordionItem,
 } from "./Accordion";
-import ScoreBadge from "./ScoreBadge";
-
-const CategoryHeader = ({
-  title,
-  categoryScore,
-}: {
-  title: string;
-  categoryScore: number;
-}) => {
-  return (
-    <div className="flex flex-row gap-4 items-center py-2">
-      <p className="text-lg font-semibold text-gray-800">{title}</p>
-      <ScoreBadge score={categoryScore} />
-    </div>
-  );
-};
-
-interface TipItemProps {
-  type: "good" | "improve";
-  tip: string;
-}
-
-const TipItem = ({ type, tip }: TipItemProps) => {
-  const isGood = type === "good";
-  return (
-    <li
-      className={cn(
-        "flex gap-3 items-start text-sm rounded-lg px-3 py-2.5",
-        isGood
-          ? "bg-green-50 text-green-800"
-          : "bg-amber-50 text-amber-900"
-      )}
-    >
-      <span className={cn("text-base shrink-0", isGood ? "text-green-500" : "text-amber-500")}>
-        {isGood ? "✓" : "→"}
-      </span>
-      <span>{tip}</span>
-    </li>
-  );
-};
-
-interface DetailsCategoryProps {
-  id: string;
-  title: string;
-  score: number;
-  tips: { type: "good" | "improve"; tip: string }[];
-}
-
-const DetailsCategory = ({ id, title, score, tips }: DetailsCategoryProps) => {
-  return (
-    <AccordionItem id={id}>
-      <AccordionHeader id={id}>
-        <CategoryHeader title={title} categoryScore={score} />
-      </AccordionHeader>
-      <AccordionContent id={id}>
-        <ul className="space-y-2">
-          {tips.map((tip, idx) => (
-            <TipItem key={idx} type={tip.type} tip={tip.tip} />
-          ))}
-        </ul>
-      </AccordionContent>
-    </AccordionItem>
-  );
-};
 
 interface DetailsProps {
   feedback: Feedback;
 }
 
-const Details = ({ feedback }: DetailsProps) => {
-  const categories = [
-    { id: "tone", title: "Tone & Style", data: feedback.toneAndStyle },
-    { id: "content", title: "Content Quality", data: feedback.content },
-    { id: "structure", title: "Structure & Layout", data: feedback.structure },
-    { id: "skills", title: "Skills Alignment", data: feedback.skills },
-  ];
+const categoryMap = [
+  { id: "tone", label: "Tone & style", key: "toneAndStyle" },
+  { id: "content", label: "Content quality", key: "content" },
+  { id: "structure", label: "Structure", key: "structure" },
+  { id: "skills", label: "Skills match", key: "skills" },
+] as const;
 
+const Details = ({ feedback }: DetailsProps) => {
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6 w-full">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">
-        Detailed Feedback
-      </h2>
-      <Accordion defaultOpen="tone" allowMultiple>
-        {categories.map((cat) => (
-          <DetailsCategory
-            key={cat.id}
-            id={cat.id}
-            title={cat.title}
-            score={cat.data.score}
-            tips={cat.data.tips}
-          />
-        ))}
+    <div className="section-card">
+      <p className="text-xs text-stone-400 uppercase tracking-widest font-medium mb-4">
+        Category breakdown
+      </p>
+
+      <Accordion defaultOpen="tone">
+        {categoryMap.map(({ id, label, key }) => {
+          const cat = feedback[key as keyof Feedback] as {
+            score: number;
+            tips: { type: "good" | "improve"; tip: string }[];
+          };
+          const s = cat.score;
+          const textColor =
+            s >= 70 ? "text-emerald-600" : s >= 50 ? "text-amber-600" : "text-red-500";
+          const barColor =
+            s >= 70 ? "bg-emerald-400" : s >= 50 ? "bg-amber-400" : "bg-red-400";
+
+          return (
+            <AccordionItem key={id} id={id}>
+              <AccordionHeader id={id}>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <span className="text-sm font-medium text-stone-700 truncate">{label}</span>
+                  {/* Mini score pill */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="w-16 h-1 bg-stone-100 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${barColor}`} style={{ width: `${s}%` }} />
+                    </div>
+                    <span className={`text-xs font-semibold tabular-nums ${textColor}`}>{s}</span>
+                  </div>
+                </div>
+              </AccordionHeader>
+
+              <AccordionContent id={id}>
+                <div className="space-y-1.5 pt-1 pb-2">
+                  {cat.tips.map((tip, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "flex gap-2.5 items-start text-sm rounded-xl px-3 py-2.5",
+                        tip.type === "good"
+                          ? "bg-emerald-50 border border-emerald-100 text-emerald-800"
+                          : "bg-amber-50 border border-amber-100 text-amber-900"
+                      )}
+                    >
+                      <span className={cn("shrink-0 mt-0.5 text-xs", tip.type === "good" ? "text-emerald-500" : "text-amber-500")}>
+                        {tip.type === "good" ? "✓" : "→"}
+                      </span>
+                      <span className="leading-relaxed">{tip.tip}</span>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
       </Accordion>
     </div>
   );
