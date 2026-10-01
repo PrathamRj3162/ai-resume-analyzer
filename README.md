@@ -2,7 +2,7 @@
 
 > AI-powered resume analyzer built with React Router v7, TypeScript, Tailwind CSS v4, and [Puter.js](https://puter.com) for free auth, storage, and AI.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/ai-resume-analyzer)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/PrathamRj3162/ai-resume-analyzer)
 
 ## ✨ Features
 
@@ -35,7 +35,7 @@
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/ai-resume-analyzer.git
+git clone https://github.com/PrathamRj3162/ai-resume-analyzer.git
 cd ai-resume-analyzer
 
 # Install dependencies
