@@ -61,7 +61,7 @@ const Upload = () => {
 
       setStatusText(steps[1]);
       const imageResult = await convertPdfToImage(file);
-      if (!imageResult.file) return fail("Couldn't render the PDF as an image. Is it a valid PDF?");
+      if (!imageResult.file) return fail(imageResult.error || "Couldn't render the PDF as an image. Is it a valid PDF?");
 
       setStatusText(steps[2]);
       const uploadedImage = await fs.upload([imageResult.file]);
