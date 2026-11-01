@@ -1,88 +1,47 @@
 import { Link } from "react-router";
 import ScoreCircle from "~/components/ScoreCircle";
-import { useEffect, useState } from "react";
-import { usePuterStore } from "~/lib/puter";
+import {useEffect, useState} from "react";
+import {usePuterStore} from "~/lib/puter";
 
-const ResumeCard = ({
-  resume: { id, companyName, jobTitle, feedback, imagePath },
-}: {
-  resume: Resume;
-}) => {
-  const { fs } = usePuterStore();
-  const [resumeImageUrl, setResumeImageUrl] = useState("");
+const ResumeCard = ({ resume : {id, companyName, jobTitle, feedback, imagePath} } : {resume: Resume}) => {
+    const { fs } = usePuterStore();
+    const [resumesUrl, setResumesUrl] = useState('');
+    
+    useEffect(() => {
+        const loadResumes = async () => {
+            const blob = await fs.read(imagePath);
+            if(!blob) return;
+            let url = URL.createObjectURL(blob);
+            setResumesUrl(url);
+        }
+        loadResumes();
+    }, [imagePath]);
 
-  useEffect(() => {
-    const loadImage = async () => {
-      const blob = await fs.read(imagePath);
-      if (!blob) return;
-      setResumeImageUrl(URL.createObjectURL(blob));
-    };
-    loadImage();
-  }, [imagePath]);
-
-  const score = feedback.overallScore;
-  const scoreColor =
-    score >= 70 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-red-500";
-
-  return (
-    <Link
-      to={`/resume/${id}`}
-      className="group flex flex-col bg-white border border-stone-200 rounded-2xl overflow-hidden hover:border-stone-400 hover:shadow-md transition-all duration-200"
-    >
-      {/* Thumbnail */}
-      <div className="relative h-44 bg-stone-50 overflow-hidden">
-        {resumeImageUrl ? (
-          <img
-            src={resumeImageUrl}
-            alt="Resume"
-            className="w-full h-full object-cover object-top group-hover:scale-[1.02] transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-8 h-8 rounded-lg bg-stone-200 animate-pulse" />
-          </div>
-        )}
-        {/* Score chip — top left */}
-        <div
-          className={`absolute top-3 left-3 bg-white border border-stone-200 rounded-lg px-2 py-0.5 text-sm font-bold ${scoreColor} shadow-sm`}
-        >
-          {score}
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="p-4 flex-1 flex flex-col">
-        <p className="font-semibold text-stone-800 text-sm truncate leading-tight">
-          {jobTitle ?? "Unknown role"}
-        </p>
-        <p className="text-xs text-stone-400 truncate mt-0.5 mb-3">
-          {companyName ?? "Unknown company"}
-        </p>
-
-        {/* Mini category bars */}
-        <div className="mt-auto space-y-1.5">
-          {[
-            { label: "ATS", score: feedback.ATS.score },
-            { label: "Content", score: feedback.content.score },
-            { label: "Skills", score: feedback.skills.score },
-          ].map(({ label, score: s }) => (
-            <div key={label} className="flex items-center gap-2">
-              <span className="text-[10px] text-stone-400 w-12 shrink-0">{label}</span>
-              <div className="flex-1 h-1 bg-stone-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${
-                    s >= 70 ? "bg-emerald-400" : s >= 50 ? "bg-amber-400" : "bg-red-400"
-                  }`}
-                  style={{ width: `${s}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-stone-400 w-5 text-right">{s}</span>
+    return (
+    <Link to= {`/resume/${id}`} className="resume-card animate-in fade-in duration-1000">
+        <div className="resume-card-header">
+            <div className="flex flex-col gap-2">
+                {companyName && <h2 className="!text-black font-bold break-word">{companyName}</h2>}
+                {jobTitle && <h3 className="text-lg break-words text-gray-500">{jobTitle}</h3>}
+                {!companyName && !jobTitle && <h2 className="!text-black font-bold">Resume</h2>}
             </div>
-          ))}
+            <div className="flex-shrink-0">
+                <ScoreCircle score={feedback.overallScore} />
+            </div>
         </div>
-      </div>
+        {resumesUrl && (
+            <div className="gradient-border animate-in fade-in duration-1000">
+                <div className="w-full h-full">
+                    <img
+                        src={resumesUrl}
+                        alt="resume"
+                        className="w-full h-[350px] max-sm:h-[200px] object-cover object-top"
+                    />
+                </div>
+            </div>
+        )}
     </Link>
-  );
-};
+  )
+}
 
-export default ResumeCard;
+export default ResumeCard

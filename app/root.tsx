@@ -23,15 +23,14 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
+  { rel: "icon", href: "/favicon.ico" },
 ];
-
-// Suppress hydration warning for theme attributes
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { init } = usePuterStore();
 
   useEffect(() => {
-    init();
+    init()
   }, [init]);
 
   return (
@@ -41,10 +40,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
-        {/* Puter.js SDK - provides free AI, auth, filesystem and KV store */}
-        <script src="https://js.puter.com/v2/" defer></script>
       </head>
-      <body className="font-[Inter] bg-gray-50 text-gray-900 antialiased">
+      <body>
+        <script src="https://js.puter.com/v2/"></script>
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -75,10 +73,10 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <main className="pt-16 p-4 container mx-auto">
-      <h1 className="text-3xl font-bold">{message}</h1>
-      <p className="mt-2 text-gray-600">{details}</p>
+      <h1>{message}</h1>
+      <p>{details}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto bg-gray-100 rounded mt-4 text-sm">
+        <pre className="w-full p-4 overflow-x-auto">
           <code>{stack}</code>
         </pre>
       )}
