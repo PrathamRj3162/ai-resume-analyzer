@@ -22,10 +22,8 @@ declare global {
       ai: {
         chat: (
           prompt: string | ChatMessage[],
-          imageURL?: string | PuterChatOptions,
-          testMode?: boolean,
           options?: PuterChatOptions
-        ) => Promise<{ message: { content: string } }>;
+        ) => Promise<{ message: { content: string | { text?: string }[] } }>;
         img2txt: (
           image: string | File | Blob,
           testMode?: boolean
@@ -68,8 +66,7 @@ interface PuterStore {
   ai: {
     chat: (
       prompt: string | ChatMessage[],
-      imageURL?: string,
-      testMode?: boolean
+      options?: PuterChatOptions
     ) => Promise<string>;
   };
   kv: {
@@ -194,18 +191,21 @@ export const usePuterStore = create<PuterStore>((set, get) => ({
   },
 
   ai: {
-    chat: async (prompt, imageURL?, testMode?) => {
+    chat: async (prompt, options) => {
       try {
-        const response = await window.puter.ai.chat(
-          prompt,
-          imageURL,
-          testMode,
-          { model: "gpt-4o" }
-        );
-        return response?.message?.content ?? "";
+        // Documented form: puter.ai.chat(prompt, { model }). Errors are re-thrown so the UI can show them
+        // instead of silently getting "" and hanging.
+        const response = await window.puter.ai.chat(prompt, {
+          model: "gpt-4o-mini",
+          ...options,
+        });
+        const content: unknown = response?.message?.content;
+        if (typeof content === "string") return content;
+        if (Array.isArray(content)) return content.map((c) => c?.text ?? "").join("");
+        return "";
       } catch (e) {
         console.error("AI chat error:", e);
-        return "";
+        throw e instanceof Error ? e : new Error(String((e as any)?.message ?? e));
       }
     },
   },

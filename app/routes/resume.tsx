@@ -1,4 +1,4 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import ATS from "~/components/ATS";
 import Details from "~/components/Details";
@@ -31,20 +31,15 @@ const resume = () => {
 
             const data = JSON.parse(resume);
 
-            const resumeBlob = await fs.read(data.resumePath);
-            if(!resumeBlob) return;
-
-            const pdfBlob = new Blob([resumeBlob], { type: 'application/pdf' });
-            const resumeUrl = URL.createObjectURL(pdfBlob);
-            setResumeUrl(resumeUrl);
-
-            const imageBlob = await fs.read(data.imagePath);
-            if(!imageBlob) return;
-            const imageUrl = URL.createObjectURL(imageBlob);
-            setImageUrl(imageUrl);
-
+            // Show feedback immediately; previews load in parallel and are optional.
             setFeedback(data.feedback);
-            console.log({resumeUrl, imageUrl, feedback : data.feedback});
+
+            const [resumeBlob, imageBlob] = await Promise.all([
+                fs.read(data.resumePath),
+                fs.read(data.imagePath),
+            ]);
+            if(resumeBlob) setResumeUrl(URL.createObjectURL(new Blob([resumeBlob], { type: 'application/pdf' })));
+            if(imageBlob) setImageUrl(URL.createObjectURL(imageBlob));
         }
 
         loadResume();
@@ -82,7 +77,7 @@ const resume = () => {
                     </div>
                 ) : (
                     <div>
-                        <img src="/images.resume-scan-2.gif" className="w-full" />
+                        <img src="/images/resume-scan-2.gif" className="w-full" />
                     </div>
                 )}
             </section>

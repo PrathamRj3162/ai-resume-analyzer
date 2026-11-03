@@ -1,17 +1,41 @@
-import {type FormEvent, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router';
 import FileUploader from '~/components/FileUploader';
 import Navbar from '~/components/Navbar'
 import { prepareInstructions } from '~/constants';
-import { convertPdfToImage } from '~/lib/pdf2img';
+import { extractPdfText, loadPdf, renderFirstPageToImage } from '~/lib/pdf2img';
 import { usePuterStore } from '~/lib/puter';
 import { generateUUID } from '~/lib/utils';
 
+const AI_TIMEOUT_MS = 90_000;
+
+const withTimeout = <T,>(p: Promise<T>, ms: number, msg: string) =>
+    Promise.race([
+        p,
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error(msg)), ms)),
+    ]);
+
+// GPT-style models often wrap JSON in ```json fences even when told not to.
+const parseFeedback = (raw: string): Feedback => {
+    const cleaned = raw.replace(/```json|```/gi, '').trim();
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start === -1 || end === -1) throw new Error('AI did not return JSON. Please try again.');
+    const parsed = JSON.parse(cleaned.slice(start, end + 1));
+    for (const k of ['ATS', 'toneAndStyle', 'content', 'structure', 'skills']) {
+        if (!parsed?.[k] || !Array.isArray(parsed[k].tips)) {
+            throw new Error(`AI response was missing "${k}". Please try again.`);
+        }
+    }
+    return parsed as Feedback;
+};
+
 const Upload = () => {
-    const {auth, isLoading, fs, ai, kv} = usePuterStore();
+    const {fs, ai, kv} = usePuterStore();
     const navigate = useNavigate();
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusText, setStatusText] = useState('');
+    const [error, setError] = useState<string | null>(null);
     const [file , setFile] = useState<File | null>(null);
 
     const handleFileSelect = (file: File | null) => {
@@ -20,49 +44,59 @@ const Upload = () => {
 
     const handleAnalyze = async ({companyName, jobTitle, jobDescription, file} : {companyName: string, jobTitle: string, jobDescription: string, file: File}) => {
         setIsProcessing(true);
-        setStatusText('Uploading resume...');
-        const uploadedFile = await fs.upload([file]);
+        setError(null);
+        try {
+            setStatusText('Reading your resume...');
+            const pdf = await loadPdf(file);
+            const resumeText = await extractPdfText(pdf);
+            if (resumeText.length < 200) {
+                throw new Error('No readable text found in this PDF. It looks scanned/image-only, which ATS systems also cannot read. Export a text-based PDF and retry.');
+            }
 
-        if(!uploadedFile) return  setStatusText('Error: Failed to upload resume.');
+            setStatusText('Analyzing resume...');
 
-        setStatusText('Converting to Image...');
-        const imageFile = await convertPdfToImage(file);
-        if(!imageFile.file) return setStatusText('Error: Failed to convert PDF to image.');
+            // AI call and file storage run IN PARALLEL. The AI no longer waits on 3 upload round-trips.
+            const storagePromise = (async () => {
+                const [uploadedFile, imageFile] = await Promise.all([
+                    fs.upload([file]),
+                    renderFirstPageToImage(pdf, file.name),
+                ]);
+                if (!uploadedFile) throw new Error('Failed to upload resume.');
+                if (!imageFile) throw new Error('Failed to render resume preview.');
+                const uploadedImage = await fs.upload([imageFile]);
+                if (!uploadedImage) throw new Error('Failed to upload preview image.');
+                return { resumePath: uploadedFile.path, imagePath: uploadedImage.path };
+            })();
 
-        setStatusText('Uploading the image...');
-        const uploadedImage  = await fs.upload([imageFile.file]);
-        if(!uploadedImage) return setStatusText('Error: Failed to upload image.');
+            const aiPromise = withTimeout(
+                ai.chat(
+                    prepareInstructions({ companyName, jobTitle, jobDescription }) +
+                    `\n\nRESUME TEXT:\n${resumeText}`
+                ),
+                AI_TIMEOUT_MS,
+                'Analysis timed out. Please try again.'
+            );
 
-        setStatusText('Preparing data...');
+            const [paths, rawFeedback] = await Promise.all([storagePromise, aiPromise]);
+            if (!rawFeedback) throw new Error('AI returned an empty response.');
+            const feedback = parseFeedback(rawFeedback);
 
-        const uuid = generateUUID();
-        const data = {
-            id: uuid,
-            resumePath: uploadedFile.path,
-            imagePath: uploadedImage.path,
-            companyName, jobTitle, jobDescription,
-            feedback: '',
+            setStatusText('Saving...');
+            const uuid = generateUUID();
+            const saved = await kv.set(`resume:${uuid}`, JSON.stringify({
+                id: uuid,
+                ...paths,
+                companyName, jobTitle, jobDescription,
+                feedback,
+            }));
+            if (!saved) throw new Error('Failed to save results.');
+
+            navigate(`/resume/${uuid}`);
+        } catch (e) {
+            console.error('Analyze failed:', e);
+            setError(e instanceof Error ? e.message : 'Something went wrong.');
+            setIsProcessing(false); // <- the old code never reset this, so the UI hung forever on any error
         }
-
-        await kv.set(`resume:${uuid}`, JSON.stringify(data));
-
-        setStatusText('Analyzing resume... This may take a few minutes.');
-
-        const feedback = await ai.feedback(
-            uploadedFile.path,
-            prepareInstructions({ jobTitle, jobDescription })
-        )
-        if(!feedback) return setStatusText('Error: Failed to analyze resume.');
-        const feedbackText = typeof feedback.message.content === 'string' 
-        ? feedback.message.content
-        : feedback.message.content[0].text;
-
-        data.feedback = JSON.parse(feedbackText);
-        await kv.set(`resume:${uuid}`, JSON.stringify(data));
-
-        setStatusText('Analysis complete! Redirecting...');
-        console.log(data);
-        navigate(`/resume/${uuid}`);
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -78,7 +112,6 @@ const Upload = () => {
         if(!file) return;
 
         handleAnalyze({companyName, jobTitle, jobDescription, file});
-         
     }
 
   return (
@@ -95,6 +128,9 @@ const Upload = () => {
                     
                 ) : (
                     <h2>Drop your resume for an ATS score and improvement tips</h2>
+                )}
+                {error && !isProcessing && (
+                    <p className="text-red-600 mt-4 max-w-xl mx-auto">{error}</p>
                 )}
                 {!isProcessing && (
                     <form id="upload-form" onSubmit={handleSubmit} className='flex flex-col gap-4 mt-8'>

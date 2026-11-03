@@ -9,7 +9,7 @@ export const prepareInstructions = ({
 }) => `
 You are an expert resume reviewer and career coach with 15+ years of experience in hiring and recruitment.
 
-Analyze the provided resume image for the following position:
+Analyze the resume text provided at the end of this message for the following position:
 - Company: ${companyName}
 - Job Title: ${jobTitle}
 - Job Description: ${jobDescription}
@@ -60,8 +60,8 @@ Guidelines:
 - ATS: Evaluate keyword matching, formatting, file format, section headers
 - Tone and Style: Evaluate language, active vs passive voice, professionalism
 - Content: Evaluate impact statements, quantified achievements, relevance
-- Structure: Evaluate layout, white space, readability, section order
+- Structure: Evaluate section order, length, readability (you only see extracted text, so do not comment on visual layout)
 - Skills: Evaluate alignment with job requirements, skill presentation
 
-Provide 2-4 tips per category, with a mix of positive and improvement observations. Be specific and actionable.
+Provide exactly 2-3 tips per category, with a mix of positive and improvement observations. Each tip must be under 25 words. Be specific and actionable.
 `;
