@@ -1,104 +1,62 @@
-# Resumind — AI Resume Analyzer
+# Resumind: AI Resume Analyzer
 
-> AI-powered resume analyzer built with React Router v7, TypeScript, Tailwind CSS v4, and [Puter.js](https://puter.com) for free auth, storage, and AI.
+Upload a PDF resume and a job description. Get an AI review (ATS, tone, content, structure, skills) plus a **deterministic keyword-match score** computed locally, with no AI involved.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/PrathamRj3162/ai-resume-analyzer)
+**Live demo:** https://ai-resume-analyzer-zeta-olive.vercel.app/
 
-## ✨ Features
+## Features
+- Sign in and store resumes per user with Puter.js (no custom backend).
+- Extracts text from the PDF in the browser with pdf.js (first 3 pages).
+- AI feedback in five categories with 2-3 short tips each (`gpt-4o-mini` through Puter).
+- Keyword match: top keywords from the job description vs. your resume text, with matched and missing lists.
+- Clear errors instead of endless spinners (scanned PDFs, bad AI replies, timeouts).
+- Unit tests and a CI quality gate (type check, tests, build) on every push and pull request.
 
-- 🤖 **AI-powered analysis** — Uses GPT-4o via Puter.js (no API key needed)
-- 📄 **PDF upload** — Drag-and-drop resume upload with PDF.js preview
-- 📊 **5-category scoring** — ATS, Tone & Style, Content, Structure, Skills
-- 🔐 **Free auth & storage** — Powered by Puter.js (no backend needed)
-- 🎨 **Beautiful UI** — Built with Tailwind CSS v4
+## How an analysis works
+1. `loadPdf` and `extractPdfText` read the PDF in the browser. Under 200 characters means a scanned/image-only PDF, which is rejected with a readable error.
+2. `computeKeywordMatch` compares job-description keywords with the resume text (pure function, fully tested).
+3. In parallel: the PDF and a page-1 JPEG preview are uploaded to Puter storage, and the resume text is sent to the AI (90 s timeout).
+4. `parseFeedback` strips code fences, extracts the JSON object and validates the five required categories. Invalid replies raise an error instead of crashing the UI.
+5. One record (feedback + keyword match + file paths) is saved to Puter KV, then the app navigates to the results page.
 
-## 🚀 Tech Stack
+## Tech stack
+React Router v7 (SPA mode) · TypeScript · Tailwind CSS v4 · Zustand · pdf.js · Puter.js · Vitest · GitHub Actions · Vercel
 
-| Tech | Purpose |
-|------|---------|
-| React Router v7 | Full-stack framework (SSR + routing) |
-| TypeScript | Type safety |
-| Tailwind CSS v4 | Styling |
-| Puter.js | Auth, filesystem, KV store, AI |
-| PDF.js | PDF to image conversion |
-| Zustand | State management |
-| Vite | Build tool |
-
-## 🏃 Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- npm
-
-### Installation
-
-```bash
-# Clone the repo
-git clone https://github.com/PrathamRj3162/ai-resume-analyzer.git
-cd ai-resume-analyzer
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
+## Project structure
+```
+app/
+  routes/        home, auth, upload, resume, wipe
+  components/    ATS, KeywordMatch and other UI pieces
+  lib/           puter.ts (store), pdf2img.ts (pdf.js helpers),
+                 keywordMatch.ts, parseFeedback.ts (+ unit tests)
+  constants/     AI prompt and instructions
 ```
 
-Your app will be at [http://localhost:5173](http://localhost:5173).
-
-## 🏗️ Building for Production
-
+## Run locally
 ```bash
+npm ci
+npm run dev        # http://localhost:5173
+npm run typecheck
+npm test
 npm run build
-npm start
 ```
 
-## 🐳 Docker
+## Deployment and CI
+- Vercel's GitHub integration deploys `main` automatically and creates preview deployments for pull requests.
+- `.github/workflows/ci.yml` runs `npm ci`, type check, tests and build on every push and PR to `main`. It does not deploy.
 
-```bash
-docker build -t ai-resume-analyzer .
-docker run -p 3000:3000 ai-resume-analyzer
-```
+## Limitations (honest list)
+- The ATS score is the language model's estimate, not a real ATS simulation. The keyword score is the only fully deterministic number.
+- Only extracted text is analyzed, so there is no feedback on visual layout, and scanned PDFs are rejected.
+- Keyword matching is exact-token based (with simple plural handling and `.js` stripping). It does not know synonyms, so "JS" and "JavaScript" count as different words.
+- Resume text is sent to a third-party AI through Puter. Do not upload anything you would not share with such a service.
+- Only the first 3 PDF pages are read.
+- The "wipe" page deletes all stored data for the app, not a single resume.
+- Unit tests cover the pure logic. The Puter integration and UI are not covered by automated tests.
 
-## 🌐 Deploying to Vercel
-
-1. Push to GitHub
-2. Import repo in [Vercel](https://vercel.com)
-3. Set Framework Preset to **Other**
-4. Build Command: `npm run build`
-5. Output Directory: `build/client`
-6. Install Command: `npm install`
-
-## 📁 Project Structure
-
-```
-ai-resume-analyzer/
-├── app/
-│   ├── components/      # UI components
-│   ├── constants/       # AI prompt templates
-│   ├── lib/             # Puter store, utils, pdf2img
-│   ├── routes/          # Page routes
-│   ├── root.tsx         # App shell
-│   └── app.css          # Global styles
-├── public/
-│   ├── icons/           # SVG icons
-│   └── pdf.worker.min.mjs
-├── types/               # TypeScript global types
-├── Dockerfile
-└── package.json
-```
-
-## 📝 How It Works
-
-1. **Sign in** with Puter (free account)
-2. **Upload** your resume PDF + enter job details
-3. The PDF is converted to an image using PDF.js
-4. Both PDF and image are stored in **Puter filesystem**
-5. The image is sent to **GPT-4o** via Puter AI with a structured prompt
-6. AI returns JSON feedback scored across 5 categories
-7. Results are saved in **Puter KV store** and displayed
-
-## 📄 License
-
-MIT
+## Started from
+This project started from the public "Resumind" tutorial (React Router + Puter.js). Changes I made on top of it:
+- Fixed an analysis step that crashed silently and left the UI hanging (called a method that did not exist, with no error handling).
+- Switched from sending a PDF image to sending extracted text, and parallelized uploads and the AI call.
+- Added validated JSON parsing, error states and a timeout.
+- Added the deterministic keyword-match feature, unit tests and the CI quality gate.

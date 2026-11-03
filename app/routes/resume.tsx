@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import ATS from "~/components/ATS";
+import KeywordMatch from "~/components/KeywordMatch";
 import Details from "~/components/Details";
 import Summary from "~/components/Summary";
 import { usePuterStore } from "~/lib/puter";
@@ -16,6 +17,7 @@ const resume = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [resumeUrl, setResumeUrl] = useState('');
     const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const [keywordMatch, setKeywordMatch] = useState<KeywordMatchResult | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -33,6 +35,7 @@ const resume = () => {
 
             // Show feedback immediately; previews load in parallel and are optional.
             setFeedback(data.feedback);
+            setKeywordMatch(data.keywordMatch ?? null);
 
             const [resumeBlob, imageBlob] = await Promise.all([
                 fs.read(data.resumePath),
@@ -73,6 +76,7 @@ const resume = () => {
                     <div className="flex flex-col gap-8 animate-in fade-in duration-1000">
                         <Summary feedback={feedback} />
                         <ATS score={feedback.ATS.score || 0} suggestions={feedback.ATS.tips || []} />
+                        <KeywordMatch result={keywordMatch} />
                         <Details feedback={feedback} />
                     </div>
                 ) : (

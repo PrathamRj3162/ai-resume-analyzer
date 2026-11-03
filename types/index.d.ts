@@ -12,6 +12,14 @@ interface Resume {
   imagePath: string;
   resumePath: string;
   feedback: Feedback;
+  keywordMatch?: KeywordMatchResult;
+}
+
+interface KeywordMatchResult {
+  score: number;
+  total: number;
+  matched: string[];
+  missing: string[];
 }
 
 interface Feedback {

@@ -6,6 +6,8 @@ import { prepareInstructions } from '~/constants';
 import { extractPdfText, loadPdf, renderFirstPageToImage } from '~/lib/pdf2img';
 import { usePuterStore } from '~/lib/puter';
 import { generateUUID } from '~/lib/utils';
+import { parseFeedback } from "~/lib/parseFeedback";
+import { computeKeywordMatch } from "~/lib/keywordMatch";
 
 const AI_TIMEOUT_MS = 90_000;
 
@@ -15,20 +17,6 @@ const withTimeout = <T,>(p: Promise<T>, ms: number, msg: string) =>
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error(msg)), ms)),
     ]);
 
-// GPT-style models often wrap JSON in ```json fences even when told not to.
-const parseFeedback = (raw: string): Feedback => {
-    const cleaned = raw.replace(/```json|```/gi, '').trim();
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
-    if (start === -1 || end === -1) throw new Error('AI did not return JSON. Please try again.');
-    const parsed = JSON.parse(cleaned.slice(start, end + 1));
-    for (const k of ['ATS', 'toneAndStyle', 'content', 'structure', 'skills']) {
-        if (!parsed?.[k] || !Array.isArray(parsed[k].tips)) {
-            throw new Error(`AI response was missing "${k}". Please try again.`);
-        }
-    }
-    return parsed as Feedback;
-};
 
 const Upload = () => {
     const {fs, ai, kv} = usePuterStore();
@@ -52,6 +40,7 @@ const Upload = () => {
             if (resumeText.length < 200) {
                 throw new Error('No readable text found in this PDF. It looks scanned/image-only, which ATS systems also cannot read. Export a text-based PDF and retry.');
             }
+            const keywordMatch = computeKeywordMatch(jobDescription, resumeText);
 
             setStatusText('Analyzing resume...');
 
@@ -88,6 +77,7 @@ const Upload = () => {
                 ...paths,
                 companyName, jobTitle, jobDescription,
                 feedback,
+                keywordMatch: keywordMatch ?? undefined,
             }));
             if (!saved) throw new Error('Failed to save results.');
 
