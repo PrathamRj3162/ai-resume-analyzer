@@ -7,61 +7,48 @@ export const prepareInstructions = ({
   jobDescription: string;
   companyName: string;
 }) => `
-You are an expert resume reviewer and career coach with 15+ years of experience in hiring and recruitment.
+You are an expert technical resume reviewer. Analyze the resume text for:
+- Role: ${jobTitle} at ${companyName}
+- Job Description: ${jobDescription.slice(0, 1500)}
 
-Analyze the resume text provided at the end of this message for the following position:
-- Company: ${companyName}
-- Job Title: ${jobTitle}
-- Job Description: ${jobDescription}
-
-Provide a detailed, structured analysis of the resume in the following JSON format. Return ONLY valid JSON with no markdown, code blocks, or extra text:
-
+Return ONLY a minified valid JSON object with NO markdown, backticks, or commentary:
 {
   "overallScore": <number 0-100>,
-  "summary": "<2-3 sentence executive summary of the resume's strengths and weaknesses>",
+  "summary": "<Direct 2-sentence executive summary under 30 words>",
   "ATS": {
     "score": <number 0-100>,
     "tips": [
-      { "type": "good", "tip": "<specific positive observation about ATS compatibility>" },
-      { "type": "improve", "tip": "<specific actionable improvement for ATS>" }
+      { "type": "good", "tip": "<positive observation under 15 words>" },
+      { "type": "improve", "tip": "<critical actionable fix under 15 words>" }
     ]
   },
   "toneAndStyle": {
     "score": <number 0-100>,
     "tips": [
-      { "type": "good", "tip": "<specific positive observation about tone/style>" },
-      { "type": "improve", "tip": "<specific actionable improvement for tone/style>" }
+      { "type": "good", "tip": "<positive observation under 15 words>" },
+      { "type": "improve", "tip": "<critical actionable fix under 15 words>" }
     ]
   },
   "content": {
     "score": <number 0-100>,
     "tips": [
-      { "type": "good", "tip": "<specific positive observation about content>" },
-      { "type": "improve", "tip": "<specific actionable improvement for content>" }
+      { "type": "good", "tip": "<positive observation under 15 words>" },
+      { "type": "improve", "tip": "<critical actionable fix under 15 words>" }
     ]
   },
   "structure": {
     "score": <number 0-100>,
     "tips": [
-      { "type": "good", "tip": "<specific positive observation about structure>" },
-      { "type": "improve", "tip": "<specific actionable improvement for structure>" }
+      { "type": "good", "tip": "<positive observation under 15 words>" },
+      { "type": "improve", "tip": "<critical actionable fix under 15 words>" }
     ]
   },
   "skills": {
     "score": <number 0-100>,
     "tips": [
-      { "type": "good", "tip": "<specific positive observation about skills match>" },
-      { "type": "improve", "tip": "<specific actionable improvement for skills>" }
+      { "type": "good", "tip": "<positive observation under 15 words>" },
+      { "type": "improve", "tip": "<critical actionable fix under 15 words>" }
     ]
   }
 }
-
-Guidelines:
-- ATS: Evaluate keyword matching, formatting, file format, section headers
-- Tone and Style: Evaluate language, active vs passive voice, professionalism
-- Content: Evaluate impact statements, quantified achievements, relevance
-- Structure: Evaluate section order, length, readability (you only see extracted text, so do not comment on visual layout)
-- Skills: Evaluate alignment with job requirements, skill presentation
-
-Provide exactly 2-3 tips per category, with a mix of positive and improvement observations. Each tip must be under 25 words. Be specific and actionable.
 `;

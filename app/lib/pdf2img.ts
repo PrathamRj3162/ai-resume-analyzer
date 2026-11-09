@@ -26,6 +26,13 @@ export async function loadPdf(file: File): Promise<PDFDocumentProxy> {
   return pdfjsLib.getDocument({ data }).promise;
 }
 
+/** Pre-warm the pdf.js library and Web Worker thread on page mount to eliminate cold-start lag. */
+export function preloadPdfWorker(): void {
+  if (typeof window !== "undefined") {
+    void getPdfjs();
+  }
+}
+
 /** Text layer of the first `maxPages` pages. This is what an ATS actually reads. */
 export async function extractPdfText(
   pdf: PDFDocumentProxy,
